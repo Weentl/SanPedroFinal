@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail', // Puede ser otro servicio de correo, como Outlook o Mailgun
   auth: {
     user: 'glowel.dev@gmail.com', // Tu correo de empresa
-    pass: 'Jangel05$', // Contraseña de tu cuenta (o app password si usas 2FA)
+    pass: 'jymu nofg pyyh fwko', // Contraseña de tu cuenta (o app password si usas 2FA)
   },
 });
 

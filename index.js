@@ -3,12 +3,16 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 
+
+
+
 // Configurar el servidor
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware para parsear el cuerpo de la solicitud en formato JSON
 app.use(bodyParser.json());
+app.use(cors());  // Permite solicitudes de cualquier origen
 
 // Configuración del transporte de Nodemailer (con tu cuenta de correo de empresa)
 const transporter = nodemailer.createTransport({

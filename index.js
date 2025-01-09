@@ -2,9 +2,7 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
-
-
-
+const cors = require('cors');
 
 // Configurar el servidor
 const app = express();

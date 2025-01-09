@@ -29,11 +29,11 @@ app.post('/send-quote', (req, res) => {
     to: 'glowel.dev@gmail.com', // Destinatario (correo de la empresa)
     subject: 'Nueva cotización recibida',
     html: `
-      <h2>Detalles de la cotización</h2>
-      <p><strong>Nombre:</strong> ${customer_info.name}</p>
-      <p><strong>Correo electrónico:</strong> ${customer_info.email}</p>
-      <p><strong>Teléfono:</strong> ${customer_info.phone}</p>
-      <p><strong>Mensaje:</strong> ${customer_info.message}</p>
+      <h2>Detalles de la Cotización</h2>
+      <p><strong>Cliente:</strong> ${customer_info.clientName} ${customer_info.clientLastname}</p>
+      <p><strong>Email:</strong> ${customer_info.clientEmail}</p>
+      <p><strong>Teléfono:</strong> ${customer_info.clientPhone}</p>
+      <p><strong>Empresa:</strong> ${customer_info.clientCompany || 'N/A'}</p>
       <h3>Productos solicitados:</h3>
       <ul>
         ${items.map(
@@ -42,8 +42,8 @@ app.post('/send-quote', (req, res) => {
             <strong>${item.name}</strong><br>
             Categoría: ${item.category}<br>
             Descripción: ${item.description}<br>
+            Dimensiones: ${item.dimensions}<br>
             Cantidad: ${item.quantity}<br>
-            <img src="${item.imageUrl}" alt="${item.name}" width="100">
           </li>
         `
         ).join('')}

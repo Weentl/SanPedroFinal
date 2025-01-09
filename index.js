@@ -25,8 +25,8 @@ app.post('/send-quote', (req, res) => {
 
   // Crear el contenido del correo
   const mailOptions = {
-    from: 'tu-correo@empresa.com', // Remitente (correo de empresa)
-    to: 'empresa@empresa.com', // Destinatario (correo de la empresa)
+    from: 'glowel.dev@gmail.com', // Remitente (correo de empresa)
+    to: 'glowel.dev@gmail.com', // Destinatario (correo de la empresa)
     subject: 'Nueva cotización recibida',
     html: `
       <h2>Detalles de la cotización</h2>

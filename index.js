@@ -78,24 +78,24 @@ app.post('/send-quote', (req, res) => {
     `,
   };
 
-  // Enviar el correo
-  transporter.sendMail(mailEmpresa, (error, info) => {
+  // Enviar el correo a la empresa
+  transporter.sendMail(mailEmpresa, (error, infoEmpresa) => {
     if (error) {
-      console.error('Error al enviar el correo:', error);
-      return res.status(500).json({ message: 'Error al enviar el correo', error });
+      console.error('Error al enviar el correo a la empresa:', error);
+      return res.status(500).json({ message: 'Error al enviar el correo a la empresa', error });
     }
-    console.log('Correo enviado:', info.response);
-    res.status(200).json({ message: 'Cotización enviada correctamente', status: 'success' });
-  });
+    console.log('Correo a la empresa enviado:', infoEmpresa.response);
 
-  // Enviar el correo
-  transporter.sendMail(mailcliente, (error, info) => {
-    if (error) {
-      console.error('Error al enviar el correo:', error);
-      return res.status(500).json({ message: 'Error al enviar el correo', error });
-    }
-    console.log('Correo enviado:', info.response);
-    res.status(200).json({ message: 'Cotización enviada correctamente', status: 'success' });
+    // Enviar el correo al cliente
+    transporter.sendMail(mailCliente, (error, infoCliente) => {
+      if (error) {
+        console.error('Error al enviar el correo al cliente:', error);
+        return res.status(500).json({ message: 'Error al enviar el correo al cliente', error });
+      }
+      console.log('Correo al cliente enviado:', infoCliente.response);
+
+      res.status(200).json({ message: 'Cotización enviada correctamente', status: 'success' });
+    });
   });
 });
 

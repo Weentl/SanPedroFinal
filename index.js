@@ -87,7 +87,7 @@ app.post('/send-quote', (req, res) => {
     console.log('Correo a la empresa enviado:', infoEmpresa.response);
 
     // Enviar el correo al cliente
-    transporter.sendMail(mailCliente, (error, infoCliente) => {
+    transporter.sendMail(mailcliente, (error, infoCliente) => {
       if (error) {
         console.error('Error al enviar el correo al cliente:', error);
         return res.status(500).json({ message: 'Error al enviar el correo al cliente', error });

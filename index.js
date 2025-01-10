@@ -26,7 +26,7 @@ app.post('/send-quote', (req, res) => {
   const { customer_info, items } = req.body; // Extraemos los datos del formulario y productos
 
   // Crear el contenido del correo
-  const mailOptions = {
+  const mailEmpresa = {
     from: 'glowel.dev@gmail.com', // Remitente (correo de empresa)
     to: 'glowel.dev@gmail.com', // Destinatario (correo de la empresa)
     subject: 'Nueva cotización recibida',
@@ -53,8 +53,43 @@ app.post('/send-quote', (req, res) => {
     `,
   };
 
+  const mailcliente = {
+    from: 'glowel.dev@gmail.com', // Remitente (correo de empresa)
+    to: customer_info.clientEmail, // Destinatario (correo de la empresa)
+    subject: 'Cotización recibida',
+    html: `
+      <h2>Detalles de la Cotización</h2>
+      <p>Gracias <strong>${customer_info.clientName} ${customer_info.clientLastname} </strong> por solicitar una cotización con nosotros, a continuación encontrarás los detalles de tu solicitud.</p>
+      <h3>Productos solicitados:</h3>
+      <ul>
+        ${items.map(
+          (item) => `
+          <li>
+            <strong>${item.name}</strong><br>
+            Categoría: ${item.category}<br>
+            Descripción: ${item.description}<br>
+            Dimensiones: ${item.dimensions}<br>
+            Cantidad: ${item.quantity}<br>
+          </li>
+        `
+        ).join('')}
+      </ul>
+      <p>En breve nos pondremos en contacto, gracias por confiar en nosotros.</p>
+    `,
+  };
+
   // Enviar el correo
-  transporter.sendMail(mailOptions, (error, info) => {
+  transporter.sendMail(mailEmpresa, (error, info) => {
+    if (error) {
+      console.error('Error al enviar el correo:', error);
+      return res.status(500).json({ message: 'Error al enviar el correo', error });
+    }
+    console.log('Correo enviado:', info.response);
+    res.status(200).json({ message: 'Cotización enviada correctamente', status: 'success' });
+  });
+
+  // Enviar el correo
+  transporter.sendMail(mailcliente, (error, info) => {
     if (error) {
       console.error('Error al enviar el correo:', error);
       return res.status(500).json({ message: 'Error al enviar el correo', error });

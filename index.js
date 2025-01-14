@@ -99,6 +99,43 @@ app.post('/send-quote', (req, res) => {
   });
 });
 
+// Ruta para manejar el formulario
+app.post('/contact', async (req, res) => {
+  const { name, email, phone, message } = req.body;
+
+  if (!name || !email || !phone || !message) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
+  }
+
+  // Configuración de nodemailer
+  const transporter = nodemailer.createTransport({
+    service: 'gmail', // Puede ser otro servicio de correo, como Outlook o Mailgun
+    auth: {
+      user: 'glowel.dev@gmail.com', // Tu correo de empresa
+      pass: 'jymu nofg pyyh fwko', // Contraseña de tu cuenta (o app password si usas 2FA)
+    },
+  });
+
+  const mailOptions = {
+    from: email,
+    to: 'glowel.dev@gmail.com', // Cambia esto por el correo donde deseas recibir los mensajes
+    subject: 'Nuevo mensaje del formulario de contacto',
+    text: `
+      Nombre: ${name}
+      Correo: ${email}
+      Teléfono: ${phone}
+      Mensaje: ${message}
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: 'Mensaje enviado exitosamente.' });
+  } catch (error) {
+    console.error('Error al enviar el correo:', error);
+    res.status(500).json({ error: 'Error al enviar el mensaje. Por favor, intenta nuevamente.' });
+  }
+});
 // Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);

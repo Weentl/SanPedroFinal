@@ -2,6 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const { body, validationResult } = require('express-validator');
 
 // Configurar el servidor
 const app = express();
@@ -30,13 +31,36 @@ const transporter = nodemailer.createTransport({
 });
 
 // Endpoint para recibir la cotización
-app.post('/send-quote', (req, res) => {
-  const { customer_info, items } = req.body; // Extraemos los datos del formulario y productos
+const { body, validationResult } = require('express-validator');
 
-  // Crear el contenido del correo
+app.post('/send-quote', [
+  // Validación de los datos del cliente
+  body('customer_info.clientName').trim().notEmpty().withMessage('El nombre del cliente es obligatorio'),
+  body('customer_info.clientLastname').trim().notEmpty().withMessage('El apellido del cliente es obligatorio'),
+  body('customer_info.clientEmail').isEmail().normalizeEmail().withMessage('El correo electrónico no es válido'),
+  body('customer_info.clientPhone').isMobilePhone().withMessage('El teléfono debe ser válido'),
+
+  // Validación de productos
+  body('items').isArray().withMessage('Se deben enviar productos en formato de array'),
+  body('items.*.name').trim().notEmpty().withMessage('El nombre del producto es obligatorio'),
+  body('items.*.category').trim().notEmpty().withMessage('La categoría del producto es obligatoria'),
+  body('items.*.description').trim().optional(),
+  body('items.*.dimensions').trim().optional(),
+  body('items.*.quantity').isInt({ gt: 0 }).withMessage('La cantidad debe ser un número mayor que cero'),
+
+], (req, res) => {
+  // Validar los datos
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { customer_info, items } = req.body;
+
+  // Lógica para procesar la cotización
   const mailEmpresa = {
-    from: 'sanpedromadera@gmail.com', // Remitente (correo de empresa)
-    to: 'sanpedromadera@gmail.com', // Destinatario (correo de la empresa)
+    from: 'sanpedromadera@gmail.com',
+    to: 'sanpedromadera@gmail.com',
     subject: 'Nueva cotización recibida',
     html: `
       <h2>Detalles de la Cotización</h2>
@@ -46,78 +70,79 @@ app.post('/send-quote', (req, res) => {
       <p><strong>Empresa:</strong> ${customer_info.clientCompany || 'N/A'}</p>
       <h3>Productos solicitados:</h3>
       <ul>
-        ${items.map(
-          (item) => `
+        ${items.map((item) => `
           <li>
             <strong>${item.name}</strong><br>
             Categoría: ${item.category}<br>
-            Descripción: ${item.description}<br>
-            Dimensiones: ${item.dimensions}<br>
+            Descripción: ${item.description || 'N/A'}<br>
+            Dimensiones: ${item.dimensions || 'N/A'}<br>
             Cantidad: ${item.quantity}<br>
           </li>
-        `
-        ).join('')}
+        `).join('')}
       </ul>
     `,
   };
 
   const mailCliente = {
-    from: 'glowel.dev@gmail.com', // Remitente (correo de empresa)
-    to: customer_info.clientEmail, // Destinatario (correo del cliente)
+    from: 'glowel.dev@gmail.com',
+    to: customer_info.clientEmail,
     subject: 'Cotización recibida',
     html: `
       <h2>Detalles de la Cotización</h2>
-      <p>Gracias <strong>${customer_info.clientName} ${customer_info.clientLastname}</strong> por solicitar una cotización con nosotros, a continuación encontrarás los detalles de tu solicitud.</p>
+      <p>Gracias <strong>${customer_info.clientName} ${customer_info.clientLastname}</strong> por solicitar una cotización con nosotros.</p>
       <h3>Productos solicitados:</h3>
       <ul>
-        ${items.map(
-          (item) => `
+        ${items.map((item) => `
           <li>
             <strong>${item.name}</strong><br>
             Categoría: ${item.category}<br>
-            Descripción: ${item.description}<br>
-            Dimensiones: ${item.dimensions}<br>
+            Descripción: ${item.description || 'N/A'}<br>
+            Dimensiones: ${item.dimensions || 'N/A'}<br>
             Cantidad: ${item.quantity}<br>
           </li>
-        `
-        ).join('')}
+        `).join('')}
       </ul>
       <p>En breve nos pondremos en contacto, gracias por confiar en nosotros.</p>
     `,
   };
 
-  // Enviar el correo a la empresa
   transporter.sendMail(mailEmpresa, (error, infoEmpresa) => {
     if (error) {
       console.error('Error al enviar el correo a la empresa:', error);
       return res.status(500).json({ message: 'Error al enviar el correo a la empresa', error });
     }
-    console.log('Correo a la empresa enviado:', infoEmpresa.response);
 
-    // Enviar el correo al cliente
     transporter.sendMail(mailCliente, (error, infoCliente) => {
       if (error) {
         console.error('Error al enviar el correo al cliente:', error);
         return res.status(500).json({ message: 'Error al enviar el correo al cliente', error });
       }
-      console.log('Correo al cliente enviado:', infoCliente.response);
 
       res.status(200).json({ message: 'Cotización enviada correctamente', status: 'success' });
     });
   });
 });
 
-// Ruta para manejar el formulario
-app.post('/contact', async (req, res) => {
-  const { name, email, phone, message } = req.body;
 
-  if (!name || !email || !phone || !message) {
-    return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
+// Ruta para manejar el formulario
+app.post('/contact', [
+  // Validación de los datos del formulario de contacto
+  body('name').trim().notEmpty().withMessage('El nombre es obligatorio'),
+  body('email').isEmail().normalizeEmail().withMessage('El correo electrónico no es válido'),
+  body('phone').isMobilePhone().withMessage('El teléfono debe ser válido'),
+  body('message').trim().notEmpty().withMessage('El mensaje es obligatorio'),
+], async (req, res) => {
+  // Validar los datos
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
+
+  const { name, email, phone, message } = req.body;
 
   const mailOptions = {
     from: email,
-    to: 'sanpedromadera@gmail.com', // Cambia esto por el correo donde deseas recibir los mensajes
+    to: 'sanpedromadera@gmail.com',
     subject: 'Nuevo mensaje del formulario de contacto',
     text: `
       Nombre: ${name}
@@ -135,6 +160,7 @@ app.post('/contact', async (req, res) => {
     res.status(500).json({ error: 'Error al enviar el mensaje. Por favor, intenta nuevamente.' });
   }
 });
+
 
 // Iniciar el servidor
 app.listen(port, () => {

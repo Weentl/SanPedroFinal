@@ -12,9 +12,16 @@ const winston = require('winston');
 // Configurar variables de entorno
 dotenv.config();
 
+// Validación de variables de entorno
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  console.error('Error: EMAIL_USER y EMAIL_PASS no están definidos en las variables de entorno');
+  process.exit(1);
+}
+
 // Configurar el servidor
 const app = express();
 const port = process.env.PORT || 3000;
+console.log('Puerto asignado:', port);  // Verifica que el puerto sea correcto
 
 // Configurar Winston para logging
 const logger = winston.createLogger({
@@ -29,7 +36,8 @@ const logger = winston.createLogger({
 // Middleware para parsear el cuerpo de la solicitud en formato JSON
 app.use(bodyParser.json());
 app.use(helmet());  // Seguridad en cabeceras
-// Ejemplo de manejo de errores en el backend
+
+// Middleware de manejo de errores
 app.use((err, req, res, next) => {
   console.error('Error interno del servidor:', err);
   res.status(500).json({ error: 'Ocurrió un error interno. Por favor intenta más tarde.' });
@@ -45,7 +53,7 @@ app.use(limiter);
 
 // Configuración de CORS para permitir solo el dominio especificado
 const corsOptions = {
-  origin: 'https://maderassanpedro.com',
+  origin: 'https://maderassanpedro.com', // Cambiar por tu dominio real
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 200,
@@ -88,7 +96,7 @@ app.post('/send-quote', [
       <h3>Productos solicitados:</h3>
       <ul>
         ${items.map(
-          (item) => `
+          (item) => ` 
           <li>
             <strong>${item.name}</strong><br>
             Categoría: ${item.category}<br>
@@ -96,8 +104,7 @@ app.post('/send-quote', [
             Dimensiones: ${item.dimensions}<br>
             Cantidad: ${item.quantity}<br>
           </li>
-        `
-        ).join('')}
+        `).join('')}
       </ul>
     `,
   };
@@ -120,8 +127,7 @@ app.post('/send-quote', [
             Dimensiones: ${item.dimensions}<br>
             Cantidad: ${item.quantity}<br>
           </li>
-        `
-        ).join('')}
+        `).join('')}
       </ul>
       <p>En breve nos pondremos en contacto, gracias por confiar en nosotros.</p>
     `,
@@ -199,6 +205,7 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   logger.info(`Servidor escuchando en http://localhost:${port}`);
 });
+
 
 
 

@@ -16,8 +16,8 @@ app.use(cors());  // Permite solicitudes de cualquier origen
 const transporter = nodemailer.createTransport({
   service: 'gmail', // Puede ser otro servicio de correo, como Outlook o Mailgun
   auth: {
-    user: 'glowel.dev@gmail.com', // Tu correo de empresa
-    pass: 'jymu nofg pyyh fwko', // Contraseña de tu cuenta (o app password si usas 2FA)
+    user: 'sanpedromadera@gmail.com', // Tu dirección de correo
+    pass: 'guoy gegu yzzy sdcq', // Tu contraseña o token de acceso
   },
 });
 
@@ -27,8 +27,8 @@ app.post('/send-quote', (req, res) => {
 
   // Crear el contenido del correo
   const mailEmpresa = {
-    from: 'glowel.dev@gmail.com', // Remitente (correo de empresa)
-    to: 'glowel.dev@gmail.com', // Destinatario (correo de la empresa)
+    from: 'sanpedromadera@gmail.com', // Remitente (correo de empresa)
+    to: 'sanpedromadera@gmail.com', // Destinatario (correo de la empresa)
     subject: 'Nueva cotización recibida',
     html: `
       <h2>Detalles de la Cotización</h2>
@@ -111,14 +111,14 @@ app.post('/contact', async (req, res) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail', // Puede ser otro servicio de correo, como Outlook o Mailgun
     auth: {
-      user: 'glowel.dev@gmail.com', // Tu correo de empresa
-      pass: 'jymu nofg pyyh fwko', // Contraseña de tu cuenta (o app password si usas 2FA)
+      user: 'sanpedromadera@gmail.com', // Tu dirección de correo
+      pass: 'guoy gegu yzzy sdcq', // Tu contraseña o token de acceso
     },
   });
 
   const mailOptions = {
     from: email,
-    to: 'glowel.dev@gmail.com', // Cambia esto por el correo donde deseas recibir los mensajes
+    to: 'sanpedromadera@gmail.com', // Cambia esto por el correo donde deseas recibir los mensajes
     subject: 'Nuevo mensaje del formulario de contacto',
     text: `
       Nombre: ${name}

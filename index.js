@@ -75,8 +75,11 @@ app.post('/send-quote', [
   body('customer_info.clientName').notEmpty().withMessage('El nombre es obligatorio'),
   // Más validaciones según sea necesario
 ], (req, res) => {
+  console.log('Recibiendo solicitud de cotización:', req.body); // Log para verificar los datos recibidos
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.log('Errores de validación:', errors.array()); // Log de errores de validación
     return res.status(400).json({ errors: errors.array() });
   }
 
@@ -136,75 +139,31 @@ app.post('/send-quote', [
   // Enviar el correo a la empresa
   transporter.sendMail(mailEmpresa, (error, infoEmpresa) => {
     if (error) {
+      console.error('Error al enviar el correo a la empresa:', error); // Log del error
       logger.error('Error al enviar el correo a la empresa:', error);
       return res.status(500).json({ message: 'Error al enviar el correo a la empresa', error });
     }
-    logger.info('Correo a la empresa enviado:', infoEmpresa.response);
+    console.log('Correo a la empresa enviado:', infoEmpresa.response); // Log de éxito
 
     // Enviar el correo al cliente
     transporter.sendMail(mailCliente, (error, infoCliente) => {
       if (error) {
+        console.error('Error al enviar el correo al cliente:', error); // Log del error
         logger.error('Error al enviar el correo al cliente:', error);
         return res.status(500).json({ message: 'Error al enviar el correo al cliente', error });
       }
-      logger.info('Correo al cliente enviado:', infoCliente.response);
+      console.log('Correo al cliente enviado:', infoCliente.response); // Log de éxito
 
       res.status(200).json({ message: 'Cotización enviada correctamente', status: 'success' });
     });
   });
 });
 
-// Ruta para manejar el formulario de contacto
-app.post('/contact', [
-  body('name').notEmpty().withMessage('El nombre es obligatorio'),
-  body('email').isEmail().withMessage('Correo electrónico no válido'),
-  body('phone').notEmpty().withMessage('El teléfono es obligatorio'),
-  body('message').notEmpty().withMessage('El mensaje es obligatorio'),
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  const { name, email, phone, message } = req.body;
-
-  const mailOptions = {
-    from: email,
-    to: process.env.EMAIL_USER,
-    subject: 'Nuevo mensaje del formulario de contacto',
-    text: `
-      Nombre: ${name}
-      Correo: ${email}
-      Teléfono: ${phone}
-      Mensaje: ${message}
-    `,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-    logger.info('Mensaje del formulario enviado exitosamente.');
-    res.status(200).json({ message: 'Mensaje enviado exitosamente.' });
-  } catch (error) {
-    logger.error('Error al enviar el mensaje del formulario:', error);
-    res.status(500).json({ error: 'Error al enviar el mensaje. Por favor, intenta nuevamente.' });
-  }
-});
-
-// Manejo de rutas no encontradas
-app.use((req, res) => {
-  res.status(404).json({ error: 'Ruta no encontrada' });
-});
-
-// Manejo de errores
-app.use((err, req, res, next) => {
-  logger.error(err.stack);
-  res.status(500).json({ error: 'Ocurrió un error interno. Por favor intenta más tarde.' });
-});
-
 // Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);
 });
+
 
 
 

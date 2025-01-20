@@ -2,7 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const { body, validationResult } = require('express-validator');
+const {validationResult } = require('express-validator');
 
 // Configurar el servidor
 const app = express();
@@ -160,6 +160,7 @@ app.post('/contact', [
     res.status(500).json({ error: 'Error al enviar el mensaje. Por favor, intenta nuevamente.' });
   }
 });
+
 
 
 // Iniciar el servidor

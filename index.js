@@ -1,4 +1,3 @@
-// Importar librerías necesarias
 const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
@@ -10,14 +9,23 @@ const port = process.env.PORT || 3000;
 
 // Middleware para parsear el cuerpo de la solicitud en formato JSON
 app.use(bodyParser.json());
-app.use(cors());  // Permite solicitudes de cualquier origen
+
+// Configuración de CORS para permitir solo solicitudes desde https://maderassanpedro.com
+const corsOptions = {
+  origin: 'https://maderassanpedro.com',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, // Permite enviar cookies si es necesario
+  optionsSuccessStatus: 200 // Para soportar navegadores antiguos
+};
+
+app.use(cors(corsOptions));
 
 // Configuración del transporte de Nodemailer (con tu cuenta de correo de empresa)
 const transporter = nodemailer.createTransport({
   service: 'gmail', // Puede ser otro servicio de correo, como Outlook o Mailgun
   auth: {
-    user: 'sanpedromadera@gmail.com', // Tu correo de empresa
-    pass: 'guoy gegu yzzy sdcq', // Contraseña de tu cuenta (o app password si usas 2FA)
+    user: 'sanpedromadera@gmail.com', // Tu dirección de correo
+    pass: 'guoy gegu yzzy sdcq', // Tu contraseña o token de acceso
   },
 });
 
@@ -53,13 +61,13 @@ app.post('/send-quote', (req, res) => {
     `,
   };
 
-  const mailcliente = {
-    from: 'sanpedromadera@gmail.com', // Remitente (correo de empresa)
-    to: customer_info.clientEmail, // Destinatario (correo de la empresa)
+  const mailCliente = {
+    from: 'glowel.dev@gmail.com', // Remitente (correo de empresa)
+    to: customer_info.clientEmail, // Destinatario (correo del cliente)
     subject: 'Cotización recibida',
     html: `
       <h2>Detalles de la Cotización</h2>
-      <p>Gracias <strong>${customer_info.clientName} ${customer_info.clientLastname} </strong> por solicitar una cotización con nosotros, a continuación encontrarás los detalles de tu solicitud.</p>
+      <p>Gracias <strong>${customer_info.clientName} ${customer_info.clientLastname}</strong> por solicitar una cotización con nosotros, a continuación encontrarás los detalles de tu solicitud.</p>
       <h3>Productos solicitados:</h3>
       <ul>
         ${items.map(
@@ -87,7 +95,7 @@ app.post('/send-quote', (req, res) => {
     console.log('Correo a la empresa enviado:', infoEmpresa.response);
 
     // Enviar el correo al cliente
-    transporter.sendMail(mailcliente, (error, infoCliente) => {
+    transporter.sendMail(mailCliente, (error, infoCliente) => {
       if (error) {
         console.error('Error al enviar el correo al cliente:', error);
         return res.status(500).json({ message: 'Error al enviar el correo al cliente', error });
@@ -107,25 +115,15 @@ app.post('/contact', async (req, res) => {
     return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
   }
 
-  // Configuración de nodemailer
-  const transporter = nodemailer.createTransport({
-    service: 'gmail', // Puede ser otro servicio de correo, como Outlook o Mailgun
-    auth: {
-      user: 'sanpedromadera@gmail.com', // Tu correo de empresa
-      pass: 'guoy gegu yzzy sdcq', // Contraseña de tu cuenta (o app password si usas 2FA)
-    },
-  });
-
   const mailOptions = {
     from: email,
     to: 'sanpedromadera@gmail.com', // Cambia esto por el correo donde deseas recibir los mensajes
     subject: 'Nuevo mensaje del formulario de contacto',
-    html: `
-      <h2>Nuevo mensaje de contacto</h2>
-      <p><strong>Nombre:</strong> ${name}</p>
-      <p><strong>Correo:</strong> ${email}</p>
-      <p><strong>Teléfono:</strong> ${phone}</p>
-      <p><strong>Mensaje:</strong> ${message}</p>
+    text: `
+      Nombre: ${name}
+      Correo: ${email}
+      Teléfono: ${phone}
+      Mensaje: ${message}
     `,
   };
 
@@ -137,6 +135,7 @@ app.post('/contact', async (req, res) => {
     res.status(500).json({ error: 'Error al enviar el mensaje. Por favor, intenta nuevamente.' });
   }
 });
+
 // Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);

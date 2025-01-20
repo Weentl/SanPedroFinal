@@ -2,7 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const {validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 
 // Configurar el servidor
 const app = express();
@@ -31,7 +31,6 @@ const transporter = nodemailer.createTransport({
 });
 
 // Endpoint para recibir la cotización
-const { body, validationResult } = require('express-validator');
 
 app.post('/send-quote', [
   // Validación de los datos del cliente

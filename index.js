@@ -29,6 +29,11 @@ const logger = winston.createLogger({
 // Middleware para parsear el cuerpo de la solicitud en formato JSON
 app.use(bodyParser.json());
 app.use(helmet());  // Seguridad en cabeceras
+// Ejemplo de manejo de errores en el backend
+app.use((err, req, res, next) => {
+  console.error('Error interno del servidor:', err);
+  res.status(500).json({ error: 'Ocurrió un error interno. Por favor intenta más tarde.' });
+});
 
 // Limitar la tasa de solicitudes
 const limiter = rateLimit({

@@ -203,7 +203,7 @@ app.use((err, req, res, next) => {
 
 // Iniciar el servidor
 app.listen(port, () => {
-  logger.info(`Servidor escuchando en http://localhost:${port}`);
+  console.log(`Servidor escuchando en http://localhost:${port}`);
 });
 
 

@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail', // Puede ser otro servicio de correo, como Outlook o Mailgun
   auth: {
     user: 'sanpedromadera@gmail.com', // Tu correo de empresa
-    pass: 'guoygegyzzyzsdq', // Contraseña de tu cuenta (o app password si usas 2FA)
+    pass: 'guoy gegu yzzy sdcq', // Contraseña de tu cuenta (o app password si usas 2FA)
   },
 });
 
@@ -112,7 +112,7 @@ app.post('/contact', async (req, res) => {
     service: 'gmail', // Puede ser otro servicio de correo, como Outlook o Mailgun
     auth: {
       user: 'sanpedromadera@gmail.com', // Tu correo de empresa
-      pass: 'guoygegyzzyzsdq', // Contraseña de tu cuenta (o app password si usas 2FA)
+      pass: 'guoy gegu yzzy sdcq', // Contraseña de tu cuenta (o app password si usas 2FA)
     },
   });
 

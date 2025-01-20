@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const { body, validationResult } = require('express-validator');
+const rateLimit = require('express-rate-limit');
 
 // Configurar el servidor
 const app = express();
@@ -30,6 +31,29 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Limitar las solicitudes para evitar abusos (ej. 100 solicitudes por IP cada 15 minutos)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Limitar a 100 solicitudes por IP
+  message: 'Demasiadas solicitudes desde esta IP, por favor inténtelo nuevamente en 15 minutos',
+  standardHeaders: true, // Para incluir información en los encabezados sobre el límite de solicitudes
+  legacyHeaders: false,  // Deshabilitar los encabezados obsoletos
+});
+
+// Aplicar el rate limit globalmente a todas las rutas
+app.use(limiter);
+
+// Limitar las solicitudes en la ruta de contacto (ej. 10 solicitudes por IP cada 1 minuto)
+const contactLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minuto
+  max: 10, // Limitar a 10 solicitudes por IP
+  message: 'Demasiadas solicitudes en corto tiempo. Por favor, intente nuevamente en 1 minuto',
+});
+
+
+
+
+
 // Endpoint para recibir la cotización
 
 app.post('/send-quote', [
@@ -47,7 +71,7 @@ app.post('/send-quote', [
   body('items.*.dimensions').trim().optional(),
   body('items.*.quantity').isInt({ gt: 0 }).withMessage('La cantidad debe ser un número mayor que cero'),
 
-], (req, res) => {
+],limiter, (req, res) => {
   // Validar los datos
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -130,7 +154,7 @@ app.post('/contact', [
   body('email').isEmail().normalizeEmail().withMessage('El correo electrónico no es válido'),
   body('phone').isMobilePhone().withMessage('El teléfono debe ser válido'),
   body('message').trim().notEmpty().withMessage('El mensaje es obligatorio'),
-], async (req, res) => {
+],contactLimiter, async (req, res) => {
   // Validar los datos
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

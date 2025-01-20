@@ -3,32 +3,76 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const { body, validationResult } = require('express-validator');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const dotenv = require('dotenv');
+const winston = require('winston');
+
+// Configurar variables de entorno
+dotenv.config();
 
 // Configurar el servidor
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Configurar Winston para logging
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
+  ],
+});
+
 // Middleware para parsear el cuerpo de la solicitud en formato JSON
 app.use(bodyParser.json());
-app.use(cors());  // Permite solicitudes de cualquier origen
+app.use(helmet());  // Seguridad en cabeceras
 
-// Configuración del transporte de Nodemailer (con tu cuenta de correo de empresa)
+// Limitar la tasa de solicitudes
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Límite de 100 solicitudes por IP
+  message: 'Demasiadas solicitudes, por favor intenta más tarde.',
+});
+app.use(limiter);
+
+// Configuración de CORS para permitir solo el dominio especificado
+const corsOptions = {
+  origin: 'https://maderassanpedro.com',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
+
+// Configuración del transporte de Nodemailer
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // Puede ser otro servicio de correo, como Outlook o Mailgun
+  service: 'gmail',
   auth: {
-    user: 'sanpedromadera@gmail.com', // Tu dirección de correo
-    pass: 'guoy gegu yzzy sdcq', // Tu contraseña o token de acceso
+    user: process.env.EMAIL_USER, // Variables de entorno
+    pass: process.env.EMAIL_PASS,
   },
 });
 
 // Endpoint para recibir la cotización
-app.post('/send-quote', (req, res) => {
+app.post('/send-quote', [
+  body('customer_info.clientEmail').isEmail().withMessage('Correo electrónico no válido'),
+  body('customer_info.clientName').notEmpty().withMessage('El nombre es obligatorio'),
+  // Más validaciones según sea necesario
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   const { customer_info, items } = req.body; // Extraemos los datos del formulario y productos
 
   // Crear el contenido del correo
   const mailEmpresa = {
-    from: 'sanpedromadera@gmail.com', // Remitente (correo de empresa)
-    to: 'sanpedromadera@gmail.com', // Destinatario (correo de la empresa)
+    from: process.env.EMAIL_USER,
+    to: process.env.EMAIL_USER,
     subject: 'Nueva cotización recibida',
     html: `
       <h2>Detalles de la Cotización</h2>
@@ -53,13 +97,13 @@ app.post('/send-quote', (req, res) => {
     `,
   };
 
-  const mailcliente = {
-    from: 'glowel.dev@gmail.com', // Remitente (correo de empresa)
-    to: customer_info.clientEmail, // Destinatario (correo de la empresa)
+  const mailCliente = {
+    from: process.env.EMAIL_USER,
+    to: customer_info.clientEmail,
     subject: 'Cotización recibida',
     html: `
       <h2>Detalles de la Cotización</h2>
-      <p>Gracias <strong>${customer_info.clientName} ${customer_info.clientLastname} </strong> por solicitar una cotización con nosotros, a continuación encontrarás los detalles de tu solicitud.</p>
+      <p>Gracias <strong>${customer_info.clientName} ${customer_info.clientLastname}</strong> por solicitar una cotización con nosotros. A continuación encontrarás los detalles de tu solicitud.</p>
       <h3>Productos solicitados:</h3>
       <ul>
         ${items.map(
@@ -81,44 +125,41 @@ app.post('/send-quote', (req, res) => {
   // Enviar el correo a la empresa
   transporter.sendMail(mailEmpresa, (error, infoEmpresa) => {
     if (error) {
-      console.error('Error al enviar el correo a la empresa:', error);
+      logger.error('Error al enviar el correo a la empresa:', error);
       return res.status(500).json({ message: 'Error al enviar el correo a la empresa', error });
     }
-    console.log('Correo a la empresa enviado:', infoEmpresa.response);
+    logger.info('Correo a la empresa enviado:', infoEmpresa.response);
 
     // Enviar el correo al cliente
-    transporter.sendMail(mailcliente, (error, infoCliente) => {
+    transporter.sendMail(mailCliente, (error, infoCliente) => {
       if (error) {
-        console.error('Error al enviar el correo al cliente:', error);
+        logger.error('Error al enviar el correo al cliente:', error);
         return res.status(500).json({ message: 'Error al enviar el correo al cliente', error });
       }
-      console.log('Correo al cliente enviado:', infoCliente.response);
+      logger.info('Correo al cliente enviado:', infoCliente.response);
 
       res.status(200).json({ message: 'Cotización enviada correctamente', status: 'success' });
     });
   });
 });
 
-// Ruta para manejar el formulario
-app.post('/contact', async (req, res) => {
-  const { name, email, phone, message } = req.body;
-
-  if (!name || !email || !phone || !message) {
-    return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
+// Ruta para manejar el formulario de contacto
+app.post('/contact', [
+  body('name').notEmpty().withMessage('El nombre es obligatorio'),
+  body('email').isEmail().withMessage('Correo electrónico no válido'),
+  body('phone').notEmpty().withMessage('El teléfono es obligatorio'),
+  body('message').notEmpty().withMessage('El mensaje es obligatorio'),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
 
-  // Configuración de nodemailer
-  const transporter = nodemailer.createTransport({
-    service: 'gmail', // Puede ser otro servicio de correo, como Outlook o Mailgun
-    auth: {
-      user: 'sanpedromadera@gmail.com', // Tu dirección de correo
-      pass: 'guoy gegu yzzy sdcq', // Tu contraseña o token de acceso
-    },
-  });
+  const { name, email, phone, message } = req.body;
 
   const mailOptions = {
     from: email,
-    to: 'sanpedromadera@gmail.com', // Cambia esto por el correo donde deseas recibir los mensajes
+    to: process.env.EMAIL_USER,
     subject: 'Nuevo mensaje del formulario de contacto',
     text: `
       Nombre: ${name}
@@ -130,15 +171,29 @@ app.post('/contact', async (req, res) => {
 
   try {
     await transporter.sendMail(mailOptions);
+    logger.info('Mensaje del formulario enviado exitosamente.');
     res.status(200).json({ message: 'Mensaje enviado exitosamente.' });
   } catch (error) {
-    console.error('Error al enviar el correo:', error);
+    logger.error('Error al enviar el mensaje del formulario:', error);
     res.status(500).json({ error: 'Error al enviar el mensaje. Por favor, intenta nuevamente.' });
   }
 });
+
+// Manejo de rutas no encontradas
+app.use((req, res) => {
+  res.status(404).json({ error: 'Ruta no encontrada' });
+});
+
+// Manejo de errores
+app.use((err, req, res, next) => {
+  logger.error(err.stack);
+  res.status(500).json({ error: 'Ocurrió un error interno. Por favor intenta más tarde.' });
+});
+
 // Iniciar el servidor
 app.listen(port, () => {
-  console.log(`Servidor escuchando en http://localhost:${port}`);
+  logger.info(`Servidor escuchando en http://localhost:${port}`);
 });
+
 
 
